@@ -162,8 +162,51 @@ class AgendaView(ctk.CTkFrame):
 
     def render_week_view(self):
         start = self.current_date - timedelta(days=self.current_date.weekday())
-        self.label_month.configure(text=f"Semaine du {start.day} {mois_en_fr(start.month)} {start.year}")
-        # À compléter comme tu veux (semaine)
+        self.label_month.configure(
+            text=f"Semaine du {start.day} {mois_en_fr(start.month)} {start.year}"
+        )
+    
+        frame = ctk.CTkFrame(self.calendar_frame)
+        frame.pack(fill="both", expand=True, padx=20, pady=10)
+    
+        # Colonnes = jours de la semaine
+        for col in range(7):
+            frame.grid_columnconfigure(col, weight=1)
+        frame.grid_rowconfigure(0, weight=0)
+        frame.grid_rowconfigure(1, weight=1)
+    
+        # Entêtes des jours
+        for col, i in enumerate(range(7)):
+            jour = start + timedelta(days=i)
+            label = ctk.CTkLabel(
+                frame,
+                text=f"{JOURS_FR[jour.weekday()]}\n{jour.day} {mois_en_fr(jour.month)}",
+                font=("Arial", 12, "bold"),
+                anchor="center"
+            )
+            label.grid(row=0, column=col, padx=5, pady=5)
+    
+        # Affichage des événements
+        for col, i in enumerate(range(7)):
+            jour = start + timedelta(days=i)
+            day_frame = ctk.CTkFrame(frame, fg_color="transparent")
+            day_frame.grid(row=1, column=col, sticky="nsew", padx=5, pady=5)
+    
+            events = get_events(jour.strftime("%Y-%m-%d"))
+            if not events:
+                ctk.CTkLabel(day_frame, text="").pack()
+            else:
+                for eid, title, tag, color in events[:4]:  # max 4 événements pour éviter overflow
+                    row_f = ctk.CTkFrame(day_frame, fg_color="transparent")
+                    row_f.pack(anchor="w", padx=2, pady=2, fill="x")
+                    if tag:
+                        tag_color = COULEURS_NOM_FR.get(color, "gray")
+                        ctk.CTkLabel(
+                            row_f, text=tag, fg_color=tag_color, text_color="white",
+                            corner_radius=4, width=45
+                        ).pack(side="left", padx=(0, 4))
+                    ctk.CTkLabel(row_f, text=title[:15], text_color="white", wraplength=80).pack(side="left")
+
 
     def render_day_view(self):
         d = self.current_date
